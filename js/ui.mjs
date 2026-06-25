@@ -71,13 +71,10 @@ let taskBaseline = { attempts: 0, aiJudgments: 0, startTime: 0 };
 let taskResults = [];  // [{ attempts, aiJudgments, elapsedMs }]
 // 証跡用: セッション全体のログ [{ type, time, text }]
 let sessionLog = [];
-// 累積統計（work-order レベル）
+// 累積統計（work-order レベル）。showReview で表示する項目のみ保持する。
 let runnerStats = {
-  totalClears: 0,
   totalFailures: 0,
   totalGambles: 0,
-  totalDeductions: 0,
-  totalCellsOpened: 0,
   startTime: 0,
   elapsedMs: 0,
 };
@@ -96,6 +93,7 @@ const faceBtn        = $('faceBtn');
 const boardGrid      = $('boardGrid');
 const boardWrapper   = $('boardWrapper');
 const fakeCursor     = $('fakeCursor');
+const heatmapCanvas  = $('heatmapCanvas');
 
 // メッセージ
 const msgEntries     = $('msgEntries');
@@ -360,6 +358,15 @@ function initBoard() {
   clearOverlay.style.display = 'none';
   awaitingHumanGamble = false;
   animating = false;
+  // 進行中のクリア/爆発余韻の残骸を除去する。
+  // 余韻中（clearEffect/boomEffect の hold 中）に再試行・業務変更で盤面を作り直すと、
+  // 緑フラッシュや CLEAR バナーが新しい盤面に最大ホールド時間ぶん残ってしまうのを防ぐ。
+  boardGrid.classList.remove('clear-flash', 'boom-flash');
+  if (boardWrapper) {
+    const staleBanner = boardWrapper.querySelector('.clear-banner');
+    if (staleBanner) staleBanner.remove();
+  }
+  clearGambleOverlay(); // ヒートマップを消す（盤面リセット時）
   buildBoard();
   setFace('normal');
   setAvatar(loopMode === 'in' ? 'sleeping' : 'active');
@@ -376,11 +383,8 @@ function startWorkOrder(order) {
   clearsDone = 0;
   sessionLog = []; // 証跡ログを新しい業務でリセット
   runnerStats = {
-    totalClears: 0,
     totalFailures: 0,
     totalGambles: 0,
-    totalDeductions: 0,
-    totalCellsOpened: 0,
     startTime: Date.now(),
     elapsedMs: 0,
   };
@@ -468,8 +472,6 @@ function revealCellDOM(idx) {
 
   cell.className = 'cell revealed';
   cell.textContent = '';
-  const existing = cell.querySelector('.heatmap-overlay');
-  if (existing) existing.remove();
 
   if (state.value[idx] > 0) {
     cell.classList.add('n' + state.value[idx]);
@@ -482,10 +484,19 @@ function flagCellDOM(idx) {
   if (!cell) return;
 
   cell.className = 'cell flagged';
-  cell.textContent = '';
-  const existing = cell.querySelector('.heatmap-overlay');
-  if (existing) existing.remove();
   cell.textContent = '▶';
+}
+
+// event の revealGroups を即時に全開放する（演出なし）。
+// revealGroups が無い場合は fallbackField（'indices' | 'revealed'）の index 配列を開く。
+function applyRevealGroupsImmediate(event, fallbackField) {
+  if (event.revealGroups) {
+    for (const group of event.revealGroups) {
+      for (const idx of group.opened) revealCellDOM(idx);
+    }
+  } else if (event[fallbackField]) {
+    for (const idx of event[fallbackField]) revealCellDOM(idx);
+  }
 }
 
 // --- 盤面描画（全セル一括） ---
@@ -503,8 +514,6 @@ function renderBoard() {
 
     cell.className = 'cell';
     cell.textContent = '';
-    const existing = cell.querySelector('.heatmap-overlay');
-    if (existing) existing.remove();
 
     if (flagged[i]) {
       cell.classList.add('flagged');
@@ -577,45 +586,72 @@ function addMsg(type, text) {
   }
 }
 
-// --- gamble時一時確率オーバーレイ ---
-function showGambleOverlay(previewResult) {
-  const probs = agent.getProbabilities();
-  if (!probs) return;
+// 地雷確率 p (0..1) に対応するヒートマップ背景色（安全=緑寄り / 危険=赤寄り）
+function heatColor(p) {
+  const r = Math.round(p * 255);
+  const g = Math.round((1 - p) * 200);
+  return `rgba(${r}, ${g}, 40, 0.5)`;
+}
 
+// --- 確率ヒートマップ（判断時のみ表示。盤面に重ねる単一 canvas レイヤー） ---
+// セル個別の DOM オーバーレイをやめ、1枚の canvas にまとめて描く。
+// renderBoard（セル要素の操作）と干渉しないため、判断が連続しても「全消去→全再生成」の
+// 点滅が起きない。大盤面でも DOM を増やさず描画コストが軽い。
+function showGambleOverlay() {
+  if (!heatmapCanvas || !boardGrid) return;
+  const probs = agent.getProbabilities();
   const state = agent.getState();
+  if (!probs || !state.revealed) return;
   const { rows, cols, revealed, flagged } = state;
-  const cells = boardGrid.children;
-  const showText = currentCellSize >= 16;
+  const cs = currentCellSize;
+
+  // canvas を board-grid の offset ボックス（境界線込み）にぴったり重ねる
+  const w = boardGrid.offsetWidth;
+  const h = boardGrid.offsetHeight;
+  const dpr = window.devicePixelRatio || 1;
+  heatmapCanvas.style.left = boardGrid.offsetLeft + 'px';
+  heatmapCanvas.style.top = boardGrid.offsetTop + 'px';
+  heatmapCanvas.style.width = w + 'px';
+  heatmapCanvas.style.height = h + 'px';
+  heatmapCanvas.width = Math.max(1, Math.round(w * dpr));
+  heatmapCanvas.height = Math.max(1, Math.round(h * dpr));
+
+  const ctx = heatmapCanvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const ox = boardGrid.clientLeft; // grid の境界線幅（= セル原点オフセット）
+  const oy = boardGrid.clientTop;
+  const showText = cs >= 16;
+  if (showText) {
+    const fontStack = getComputedStyle(document.documentElement).getPropertyValue('--font-jp').trim() || 'sans-serif';
+    ctx.font = `${Math.round(cs * 0.42)}px ${fontStack}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+  }
 
   for (let i = 0; i < rows * cols; i++) {
     if (revealed[i] || flagged[i]) continue;
     const p = probs[i];
     if (p === undefined || p <= 0) continue;
-
-    const cell = cells[i];
-    if (!cell) continue;
-
-    const existing = cell.querySelector('.heatmap-overlay');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.className = 'heatmap-overlay gamble-temp';
-    const r = Math.round(p * 255);
-    const g = Math.round((1 - p) * 200);
-    overlay.style.background = `rgba(${r}, ${g}, 40, 0.5)`;
+    const x = ox + (i % cols) * cs;
+    const y = oy + Math.floor(i / cols) * cs;
+    ctx.fillStyle = heatColor(p);
+    ctx.fillRect(x, y, cs, cs);
     if (showText) {
-      overlay.style.color = 'rgba(255,255,255,0.9)';
-      overlay.textContent = (p * 100).toFixed(0) + '%';
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillText((p * 100).toFixed(0) + '%', x + cs / 2, y + cs / 2 + 1);
     }
-    cell.appendChild(overlay);
   }
+
+  heatmapCanvas.style.display = 'block';
 }
 
 function clearGambleOverlay() {
-  const temps = boardGrid.querySelectorAll('.gamble-temp');
-  for (const t of temps) t.remove();
-  const targets = boardGrid.querySelectorAll('.gamble-target');
-  for (const t of targets) t.classList.remove('gamble-target');
+  if (!heatmapCanvas) return;
+  if (heatmapCanvas.style.display !== 'none') heatmapCanvas.style.display = 'none';
+  const ctx = heatmapCanvas.getContext('2d');
+  if (ctx) ctx.clearRect(0, 0, heatmapCanvas.width, heatmapCanvas.height);
 }
 
 // --- in-the-loop: フロンティア強調（確率なし） ---
@@ -716,7 +752,8 @@ function sortByDistance(indices, originIdx, cols) {
 // --- gamble思考ウェイト演出 ---
 async function showGambleThinking(previewResult) {
   // ログには出さない（「試算中／評価完了」はノイズ）。演出のみ行う。
-  showGambleOverlay(previewResult);
+  // ヒートマップは判断（賭け）時のみ表示する（仕様）。
+  showGambleOverlay();
   setFace('thinking');
   setAvatar('thinking');
 
@@ -766,28 +803,16 @@ async function showGambleThinking(previewResult) {
 }
 
 // --- セル順次演出 ---
-async function animateRevealCells(indices) {
+// indices を1マスずつカーソル演出付きで適用する（apply = revealCellDOM | flagCellDOM）。
+// 高速モードに切り替わったら残りを即時適用して打ち切る（apply は冪等）。
+async function animateCells(indices, apply) {
   const cellDelay = Math.max(30, Math.floor(moveSpeed / 4));
   for (const idx of indices) {
     await pauseGate();
-    if (fastMode) { for (const i of indices) revealCellDOM(i); break; }
+    if (fastMode) { for (const i of indices) apply(i); break; }
     await moveCursorToCell(idx);
     await cursorClick();
-    revealCellDOM(idx);
-    if (cellDelay > 0 && indices.length > 1) {
-      await new Promise(r => setTimeout(r, cellDelay));
-    }
-  }
-}
-
-async function animateFlagCells(indices) {
-  const cellDelay = Math.max(30, Math.floor(moveSpeed / 4));
-  for (const idx of indices) {
-    await pauseGate();
-    if (fastMode) { for (const i of indices) flagCellDOM(i); break; }
-    await moveCursorToCell(idx);
-    await cursorClick();
-    flagCellDOM(idx);
+    apply(idx);
     if (cellDelay > 0 && indices.length > 1) {
       await new Promise(r => setTimeout(r, cellDelay));
     }
@@ -838,6 +863,7 @@ function buildFastUnits(event, { splitFlood = false } = {}) {
 // --- boom 余韻 ---
 async function boomEffect(boomIdx) {
   setFace('boom');
+  clearGambleOverlay(); // 判断→爆発: ヒートマップを消す
 
   // 盤面赤フラッシュ
   boardGrid.classList.add('boom-flash');
@@ -875,6 +901,7 @@ async function boomEffect(boomIdx) {
 // --- クリア余韻（緑フラッシュ＋CLEARバナー＋ホールド） ---
 async function clearEffect() {
   setFace('clear');
+  clearGambleOverlay(); // クリア時: ヒートマップを消す
 
   // 勝利時は残った地雷も全て旗にして見せる（爆弾ではなく「全部見つけた」＝クリアの証）。
   // クリアは「安全マスを全開」で成立するため未フラグの地雷が残ることがあり、
@@ -925,6 +952,13 @@ async function executeAnimatedStep() {
       setAvatar('active');
     }
 
+    // ヒートマップは判断（gamble / await-human）時のみ表示する。
+    // 高速モードは賭け後すぐ消さない方式なので、非判断ステップに入るこの時点で確実に消す。
+    // （連続する判断ではヒートマップが消えずに更新され点滅しないが、推論等へ移る瞬間に消える）
+    if (fastMode && previewResult.type !== 'gamble' && previewResult.type !== 'await-human') {
+      clearGambleOverlay();
+    }
+
     // --- await-human (in-the-loop: 賭けは人間) ---
     if (previewResult.type === 'await-human') {
       const event = agent.step();
@@ -969,13 +1003,7 @@ async function executeAnimatedStep() {
         if (event.type === 'idle') { animating = false; return; }
 
         // revealGroups ベース: 1クリックの flood を一括展開
-        if (event.revealGroups) {
-          for (const group of event.revealGroups) {
-            for (const idx of group.opened) revealCellDOM(idx);
-          }
-        } else if (event.indices) {
-          for (const idx of event.indices) revealCellDOM(idx);
-        }
+        applyRevealGroupsImmediate(event, 'indices');
 
         if (event.log) addMsg(event.type, event.log);
         setFace('normal');
@@ -992,7 +1020,10 @@ async function executeAnimatedStep() {
       await moveCursorToCell(previewResult.index);
       await cursorClick();
       if (stale()) return;
-      clearGambleOverlay();
+      // 非高速はクリック直後にヒートマップを消す（従来どおり）。
+      // 高速モードは消さずに残し、次が非判断ステップに入る時点（executeAnimatedStep 冒頭）で消す。
+      // → 連続する判断ではヒートマップが消えずに更新され、点滅しない。
+      if (!fastMode) clearGambleOverlay();
 
       const event = agent.step();
       if (event.type === 'idle') { animating = false; return; }
@@ -1001,7 +1032,6 @@ async function executeAnimatedStep() {
         if (event.log) addMsg('boom', event.log);
         await boomEffect(event.index);
         if (stale()) return;
-        accumulateRunnerStats(event);
         animating = false;
         return;
       }
@@ -1010,12 +1040,8 @@ async function executeAnimatedStep() {
       if (fastMode) {
         await fastRevealUnits(buildFastUnits(event, { splitFlood: true }), stale);
         if (stale()) return;
-      } else if (event.revealGroups) {
-        for (const group of event.revealGroups) {
-          for (const idx of group.opened) revealCellDOM(idx);
-        }
-      } else if (event.revealed) {
-        for (const idx of event.revealed) revealCellDOM(idx);
+      } else {
+        applyRevealGroupsImmediate(event, 'revealed');
       }
 
       if (event.log) {
@@ -1091,7 +1117,7 @@ async function executeAnimatedStep() {
           // フォールバック（古い経路）: フラグ→revealGroups
           if (event.flagged && event.flagged.length > 0) {
             const sorted = sortByDistance(event.flagged, origin, cols);
-            await animateFlagCells(sorted);
+            await animateCells(sorted, flagCellDOM);
           }
           if (event.revealGroups && event.revealGroups.length > 0) {
             const groupDelay = Math.max(30, Math.floor(moveSpeed / 4));
@@ -1109,7 +1135,7 @@ async function executeAnimatedStep() {
             }
           } else if (event.revealed && event.revealed.length > 0) {
             const sorted = sortByDistance(event.revealed, origin, cols);
-            await animateRevealCells(sorted);
+            await animateCells(sorted, revealCellDOM);
           }
         }
 
@@ -1149,14 +1175,13 @@ async function executeAnimatedStep() {
   }
 }
 
-// --- runner統計累積 ---
-function accumulateRunnerStats(event) {
-  // boom 時は failures を拾う（handleClear で clear 分は拾うので boom だけここ）
-}
-
 // --- クリア ---
 async function handleClear(eventOverride) {
   stopLoop();
+  // この余韻処理が始まった時点の世代。盤面リセット/業務変更（initBoard）で世代が変わったら、
+  // 各 await から復帰したあとの「次タスク開始・レビュー表示」を中断する。
+  // （旧クリアの継続が新しいゲームの taskIndex/盤面を上書きするのを防ぐ）
+  const gen = stepGeneration;
   let event = eventOverride;
   if (!event || event.type !== 'clear') {
     event = agent.step();
@@ -1166,17 +1191,15 @@ async function handleClear(eventOverride) {
   updateDisplay();
   renderBoard();
 
-  // runner 累積
+  // runner 累積（showReview で表示する項目のみ）
   if (event.stats) {
-    runnerStats.totalClears++;
     runnerStats.totalGambles += event.stats.gambles;
-    runnerStats.totalDeductions += event.stats.deductions;
     runnerStats.totalFailures += event.stats.failures;
-    runnerStats.totalCellsOpened += event.stats.cellsOpened;
   }
 
   // クリアの余韻（緑フラッシュ＋CLEAR表示＋ウェイト）。クリアしたことを分かりやすく。
   await clearEffect();
+  if (gen !== stepGeneration) return; // 余韻中に業務変更/リセットされた → 中断
 
   // ワークオーダー処理
   if (workOrder) {
@@ -1197,16 +1220,19 @@ async function handleClear(eventOverride) {
       if (taskIndex >= workOrder.tasks.length) {
         runnerStats.elapsedMs = Date.now() - runnerStats.startTime;
         await new Promise(r => setTimeout(r, 800));
+        if (gen !== stepGeneration) return;
         showReview();
         return;
       }
 
       await new Promise(r => setTimeout(r, 600));
+      if (gen !== stepGeneration) return;
       startCurrentTask();
       return;
     }
 
     await new Promise(r => setTimeout(r, 400));
+    if (gen !== stepGeneration) return;
     initBoard();
     startLoop();
   } else {
@@ -1394,8 +1420,10 @@ boardGrid.addEventListener('click', (e) => {
   renderBoard();
 
   if (result.type === 'boom') {
+    const gen = stepGeneration;
     (async () => {
       await boomEffect(result.index);
+      if (gen !== stepGeneration) return; // 余韻中に業務変更/リセットされた → 中断
       if (workOrder) {
         runnerStats.totalFailures++;
       }

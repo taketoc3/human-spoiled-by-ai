@@ -564,6 +564,18 @@ html, body {
   pointer-events: none;
 }
 
+/* 確率ヒートマップ（盤面に重ねる単一 canvas レイヤー。判断時のみ表示） */
+.heatmap-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  /* セル(<3)より上・スティッキーな AI AGENT 帯(z-index:12)より下に置く。
+     盤面スクロール時にヒートマップが固定ヘッダの上へ被らないようにするため。 */
+  z-index: 5;
+  pointer-events: none;
+  display: none;
+}
+
 /* 賭け先セル強調 */
 .cell.gamble-target {
   outline: 2px solid var(--accent-orange);

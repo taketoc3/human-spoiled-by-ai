@@ -61,7 +61,6 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
   let flagged = null;     // Uint8Array — フラグ済み
   let phase = PHASE.INIT;
   let probabilities = null;
-  let lastGuessInfo = null;
 
   // gambleMode: 'auto'（既定）= 賭けを自動実行、'human' = 賭けで停止し人間に委ねる
   let gambleMode = 'auto';
@@ -76,11 +75,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
     failures: 0,
     startTime: Date.now(),
     elapsedMs: 0,
-    bestProgress: 0,
   };
-
-  // 試行ごとの開放数
-  let currentOpened = 0;
 
   // 試行ごとの開始時刻（ゲーム内タイマー用）
   let attemptStartTime = Date.now();
@@ -93,8 +88,6 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
     flagged = new Uint8Array(totalCells);
     phase = PHASE.INIT;
     probabilities = null;
-    lastGuessInfo = null;
-    currentOpened = 0;
     attemptStartTime = Date.now();
     stats.attempts++;
   }
@@ -146,7 +139,6 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
       return { boom: true, opened: [idx] };
     }
     const opened = floodReveal(idx, board, revealed, value);
-    currentOpened += opened.length;
     stats.cellsOpened += opened.length;
     return { boom: false, opened };
   }
@@ -161,10 +153,6 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
   /** 統計を更新 */
   function updateStats() {
     stats.elapsedMs = Date.now() - stats.startTime;
-    const prog = progress();
-    if (prog > stats.bestProgress) {
-      stats.bestProgress = prog;
-    }
   }
 
   /** フロンティア（未開放・未フラグ・隣接に開放セルがある）のindex一覧を返す */
@@ -427,7 +415,6 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
       // 確定手なし → 賭け
       probabilities = computeProbabilities(getKnowledgeState(), minesRemaining());
       const guess = pickGuess(getKnowledgeState(), minesRemaining());
-      lastGuessInfo = guess;
 
       const result = revealCell(guess.index);
 
