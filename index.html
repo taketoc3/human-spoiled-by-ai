@@ -23,22 +23,8 @@
       </div>
       <div class="work-order-body">
         <div class="wo-about">
-          <p>AIが論理解決も確率的判断も自律で行い、失敗しても自ら再挑戦する。人間は監督者として眺めるだけ。</p>
-          <p>
-            本作は <a href="https://mame.github.io/minesweeper-spoiled-by-ai/" target="_blank" rel="noopener">Minesweeper spoiled by AI</a>（作者: mame）へのアンサー。
-            あちらが human-in-the-loop なら、こちらは human-on-the-loop ― 2026年、運の判断すらAIに委ねた先の風景。
-          </p>
-          <p>
-            ソルバーのアルゴリズムは <a href="https://www.ioccc.org/2020/endoh1/index.html" target="_blank" rel="noopener">IOCCC 2020 endoh1</a>（CC BY-SA 4.0）の記述を着想元とした独自実装。
-            / <a href="https://github.com/taketoc3/ai-minesweeper" target="_blank" rel="noopener">GitHub (MIT)</a>
-          </p>
-        </div>
-        <div class="wo-section">
-          <label class="wo-label">モード</label>
-          <select class="retro-select" id="woLoopMode">
-            <option value="on" selected>on-the-loop（AI全自動・眺めるだけ）</option>
-            <option value="in">in-the-loop（判断は人間）</option>
-          </select>
+          <p>AIが論理と確率で自動的に解き、失敗しても再挑戦します。</p>
+          <p>下のタスクを上から順に挑戦し、クリアすると次へ進みます。</p>
         </div>
         <div class="wo-section">
           <label class="wo-label">タスク</label>
@@ -48,6 +34,7 @@
         </div>
         <button class="retro-btn wo-start-btn" id="woStartBtn">AIに任せる</button>
         <button class="retro-btn wo-cancel-btn" id="woCancelBtn" style="display:none">戻る（変更しない）</button>
+        <p class="wo-credit"><a href="https://mame.github.io/minesweeper-spoiled-by-ai/" target="_blank" rel="noopener">『Minesweeper spoiled by AI』(mame)</a> に着想 ・ MIT</p>
       </div>
     </div>
   </div>

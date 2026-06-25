@@ -29,6 +29,8 @@ const BOARD_MAX_PX = 860;
 
 // --- 爆発余韻定数 ---
 const BOOM_HOLD_MS = 1100;
+// --- クリア余韻定数 ---
+const CLEAR_HOLD_MS = 1400;
 
 // 速度・判断速度スライダー（細かい調整UI）の表示。
 // 既定は非表示でユーザー調整をなくす。true にすればいつでも復活できる。
@@ -119,7 +121,6 @@ if (!SHOW_SPEED_CONTROLS) {
 // ワークオーダー
 const workOrderOverlay = $('workOrderOverlay');
 const woTaskRows       = $('woTaskRows');
-const woLoopMode       = $('woLoopMode');
 const woStartBtn       = $('woStartBtn');
 const woChangeBtn      = $('woChangeBtn');
 const woCancelBtn      = $('woCancelBtn');
@@ -155,14 +156,11 @@ function buildWoTaskRows() {
   const diffKeys = Object.keys(DIFFICULTIES);
   woTaskRows.innerHTML = '';
 
-  const defaults = [
-    { selected: 'intermediate', showEmpty: false },
-    { selected: '',             showEmpty: true },
-    { selected: '',             showEmpty: true },
-  ];
+  // 既定で3タスクをプリセット（難易度の階段: Beginner → Intermediate → Expert）。
+  // 各行は変更可。'---' を選べばその行は無効（タスクなし）にできる。
+  const defaults = ['beginner', 'intermediate', 'expert'];
 
   for (let i = 0; i < defaults.length; i++) {
-    const def = defaults[i];
     const row = document.createElement('div');
     row.className = 'wo-task-row';
 
@@ -172,17 +170,17 @@ function buildWoTaskRows() {
 
     const sel = document.createElement('select');
     sel.className = 'retro-select wo-diff';
-    if (def.showEmpty) {
-      const emptyOpt = document.createElement('option');
-      emptyOpt.value = '';
-      emptyOpt.textContent = '---';
-      sel.appendChild(emptyOpt);
-    }
+
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = '';
+    emptyOpt.textContent = '---（なし）';
+    sel.appendChild(emptyOpt);
+
     for (const key of diffKeys) {
       const opt = document.createElement('option');
       opt.value = key;
       opt.textContent = diffLabel(key);
-      if (key === def.selected) opt.selected = true;
+      if (key === defaults[i]) opt.selected = true;
       sel.appendChild(opt);
     }
 
@@ -236,9 +234,6 @@ function switchLoopMode(newMode) {
 
   // トグルボタン表示更新
   updateLoopToggleUI();
-
-  // 業務指示書のセレクタと同期
-  if (woLoopMode) woLoopMode.value = loopMode;
 
   // アバター更新
   setAvatar(loopMode === 'in' ? 'sleeping' : 'active');
@@ -877,6 +872,41 @@ async function boomEffect(boomIdx) {
   boardGrid.classList.remove('boom-flash');
 }
 
+// --- クリア余韻（緑フラッシュ＋CLEARバナー＋ホールド） ---
+async function clearEffect() {
+  setFace('clear');
+
+  // 勝利時は残った地雷も全て旗にして見せる（爆弾ではなく「全部見つけた」＝クリアの証）。
+  // クリアは「安全マスを全開」で成立するため未フラグの地雷が残ることがあり、
+  // renderBoard では爆弾💣として見えてしまうのを防ぐ。
+  const tb = agent.getTrueBoard();
+  if (tb && tb.mines) {
+    const cells = boardGrid.children;
+    for (const idx of tb.mines) {
+      const cell = cells[idx];
+      if (!cell) continue;
+      cell.className = 'cell flagged';
+      cell.textContent = '▶';
+    }
+  }
+
+  boardGrid.classList.add('clear-flash');
+
+  // 盤面中央に CLEAR バナー
+  let banner = null;
+  if (boardWrapper) {
+    banner = document.createElement('div');
+    banner.className = 'clear-banner';
+    banner.textContent = 'CLEAR';
+    boardWrapper.appendChild(banner);
+  }
+
+  await new Promise(r => setTimeout(r, CLEAR_HOLD_MS));
+
+  boardGrid.classList.remove('clear-flash');
+  if (banner) banner.remove();
+}
+
 // --- ステップ実行 ---
 async function executeAnimatedStep() {
   if (animating) return;
@@ -1144,6 +1174,9 @@ async function handleClear(eventOverride) {
     runnerStats.totalFailures += event.stats.failures;
     runnerStats.totalCellsOpened += event.stats.cellsOpened;
   }
+
+  // クリアの余韻（緑フラッシュ＋CLEAR表示＋ウェイト）。クリアしたことを分かりやすく。
+  await clearEffect();
 
   // ワークオーダー処理
   if (workOrder) {
@@ -1419,8 +1452,8 @@ woStartBtn.addEventListener('click', () => {
     tasks.push({ difficulty: 'intermediate', quota: 1 });
   }
 
-  const mode = woLoopMode.value;
-  startWorkOrder({ tasks, loopMode: mode });
+  // モード選択は廃止。既定は on-the-loop（AI自動）。in-the-loop は対局中トグルで切替。
+  startWorkOrder({ tasks, loopMode: 'on' });
 });
 
 // もう一度眺める（レガシー）
