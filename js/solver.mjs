@@ -235,7 +235,7 @@ export function pickGuess(state, minesRemaining) {
       if (!revealed[i] && !flagged[i]) unopened++;
     }
     const density = unopened > 0 ? minesRemaining / unopened : 0;
-    return { index: 0, probability: density, frontierSize: 0, isFirstMove: true };
+    return { index: 0, probability: density, frontierSize: 0, candidates: 1, isFirstMove: true };
   }
 
   const probs = computeProbabilities(state, minesRemaining);
@@ -278,10 +278,18 @@ export function pickGuess(state, minesRemaining) {
     }
   }
 
+  // 最小確率と同値（＝同じリスクの選択肢）のセル数を数える
+  let candidates = 0;
+  for (let i = 0; i < size; i++) {
+    if (revealed[i] || flagged[i]) continue;
+    if (probs[i] === bestProb) candidates++;
+  }
+
   return {
     index: bestIdx,
     probability: bestProb,
     frontierSize,
+    candidates,
     isFirstMove: false,
   };
 }

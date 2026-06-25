@@ -282,17 +282,18 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
       resetInternal();
       return {
         type: 'restart',
-        log: `--- 新しい盤面を生成。試行 #${stats.attempts} 開始 ---`,
+        log: `↻ 再挑戦 #${stats.attempts - 1}`,
       };
     }
 
     // CLEAR
     if (phase === PHASE.CLEAR) {
       phase = PHASE.IDLE;
-      const elapsed = (stats.elapsedMs / 1000).toFixed(1);
+      const sec = Math.round(stats.elapsedMs / 1000);
+      const timeStr = sec >= 60 ? `${Math.floor(sec / 60)}分${sec % 60}秒` : `${sec}秒`;
       return {
         type: 'clear',
-        log: `CLEARED。試行 #${stats.attempts}、判断 ${stats.gambles} 回、経過 ${elapsed} 秒。`,
+        log: `✓ CLEAR ・判断${stats.gambles}回 ・${timeStr}`,
         stats: { ...stats },
       };
     }
@@ -324,7 +325,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         index: guess.index,
         indices: result.opened,
         revealGroups: [{ click: guess.index, opened: result.opened }],
-        log: `情報ゼロ。${coordStr(guess.index)} 角から開始。${result.opened.length} セル展開。`,
+        log: `初手 ${coordStr(guess.index)} 地雷残${minesRemaining()}`,
       };
     }
 
@@ -439,7 +440,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         return {
           type: 'boom',
           index: guess.index,
-          log: `確定手なし。フロンティア ${guess.frontierSize} セルを評価… ${coordStr(guess.index)} 推定地雷確率 ${(guess.probability * 100).toFixed(1)}% が最小。BOOM。試行 #${stats.attempts} 失敗（開放 ${countRevealed()}/${safeCells}、進捗 ${prog}%）。新しい盤面へ。`,
+          log: `✗ 判断 ${coordStr(guess.index)} 地雷残${minesRemaining()} 確率${(guess.probability * 100).toFixed(0)}%・${guess.candidates}択 → 地雷`,
           stats: { ...stats },
         };
       }
@@ -464,7 +465,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         frontierSize: guess.frontierSize,
         revealed: result.opened,
         revealGroups: [{ click: guess.index, opened: result.opened }],
-        log: `確定手なし。フロンティア ${guess.frontierSize} セルを評価… ${coordStr(guess.index)} 推定地雷確率 ${(guess.probability * 100).toFixed(1)}% が最小。ここに決める。${result.opened.length} セル展開。`,
+        log: `◯ 判断 ${coordStr(guess.index)} 地雷残${minesRemaining()} 確率${(guess.probability * 100).toFixed(0)}%・${guess.candidates}択 → 安全`,
       };
     }
 
@@ -490,7 +491,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         index,
         revealed: result.opened,
         revealGroups: [{ click: index, opened: result.opened }],
-        log: `あなたが初手 ${coordStr(index)} を選択。${result.opened.length} セル展開。`,
+        log: `初手 あなた ${coordStr(index)} 地雷残${minesRemaining()}`,
       };
     }
 
@@ -511,7 +512,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         type: 'boom',
         index,
         revealed: result.opened,
-        log: `人間が介入。${coordStr(index)} を選択… BOOM。試行 #${stats.attempts} 失敗。`,
+        log: `✗ あなた ${coordStr(index)} 地雷残${minesRemaining()} → 地雷`,
         stats: { ...stats },
       };
     }
@@ -534,7 +535,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
       frontierSize: null,
       revealed: result.opened,
       revealGroups: [{ click: index, opened: result.opened }],
-      log: `人間が介入。${coordStr(index)} を選択。${result.opened.length} セル展開。`,
+      log: `◯ あなた ${coordStr(index)} 地雷残${minesRemaining()} → 安全`,
       humanIntervention: true,
     };
   }

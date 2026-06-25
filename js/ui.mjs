@@ -67,6 +67,8 @@ let clearsDone = 0;
 let taskBaseline = { attempts: 0, aiJudgments: 0, startTime: 0 };
 // 完了タスクの確定統計
 let taskResults = [];  // [{ attempts, aiJudgments, elapsedMs }]
+// 証跡用: セッション全体のログ [{ type, time, text }]
+let sessionLog = [];
 // 累積統計（work-order レベル）
 let runnerStats = {
   totalClears: 0,
@@ -253,11 +255,11 @@ function switchLoopMode(newMode) {
     clearFrontierHighlight();
     clearGambleOverlay();
     setFace('normal');
-    addMsg('system', 'on-the-loop に切替。AIが引き継ぎます。');
+    addMsg('system', 'モード → on-the-loop（判断はAI）');
     startLoop();
   } else if (loopMode === 'in') {
     // on→in 切替: 次の gamble で自然に await-human になる
-    addMsg('system', 'in-the-loop に切替。次の判断はあなたの番です。');
+    addMsg('system', 'モード → in-the-loop（判断はあなた）');
   }
 }
 
@@ -369,14 +371,6 @@ function initBoard() {
   updateLoopToggleUI();
   updateDisplay();
   updateAvatar();
-
-  if (loopMode === 'on') {
-    addMsg('system', 'AIエージェントが自律でマインスイーパーに挑む。');
-    addMsg('system', '人間の監督者は、ただ眺めるだけ。');
-  } else {
-    addMsg('system', 'AIが論理で解き、判断はあなたに委ねる。');
-    addMsg('system', '確定手がなくなったら、あなたの出番。');
-  }
 }
 
 // --- ワークオーダー開始 ---
@@ -385,6 +379,7 @@ function startWorkOrder(order) {
   loopMode = order.loopMode;
   taskIndex = 0;
   clearsDone = 0;
+  sessionLog = []; // 証跡ログを新しい業務でリセット
   runnerStats = {
     totalClears: 0,
     totalFailures: 0,
@@ -429,7 +424,10 @@ function startCurrentTask() {
     aiJudgments: agent.getAiJudgments(),
     startTime: Date.now(),
   };
-  addMsg('system', `--- タスク ${taskIndex + 1}/${workOrder.tasks.length}: ${diffLabel(difficulty)} ---`);
+  const d = DIFFICULTIES[difficulty];
+  const dname = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+  addMsg('system', `▶ タスク ${taskIndex + 1}/${workOrder.tasks.length}  ${dname} ${d.rows}×${d.cols}・地雷${d.mineCount}`);
+  if (loopMode === 'in') addMsg('system', 'モード → in-the-loop（判断はあなた）');
   startLoop();
 }
 
@@ -562,10 +560,15 @@ function addMsg(type, text) {
   const time = document.createElement('span');
   time.className = 'msg-time';
   const now = new Date();
-  time.textContent = now.toTimeString().slice(0, 8);
+  const timeStr = now.toTimeString().slice(0, 8);
+  time.textContent = timeStr;
 
   entry.appendChild(time);
   entry.appendChild(document.createTextNode(text));
+
+  // 証跡用にセッション全体のログを蓄積（ライブ表示は盤面ごとにクリアされるため別保持）
+  sessionLog.push({ type, time: timeStr, text });
+  if (sessionLog.length > 2000) sessionLog.shift();
 
   const prev = msgEntries.querySelector('.latest');
   if (prev) prev.classList.remove('latest');
@@ -717,18 +720,13 @@ function sortByDistance(indices, originIdx, cols) {
 
 // --- gamble思考ウェイト演出 ---
 async function showGambleThinking(previewResult) {
-  const prob = previewResult.probability;
-  const fs = previewResult.frontierSize;
-  const pStr = prob !== undefined ? (prob * 100).toFixed(1) + '%' : '?';
-
-  addMsg('thinking', '確定手なし。各マスの地雷確率を試算中...');
+  // ログには出さない（「試算中／評価完了」はノイズ）。演出のみ行う。
   showGambleOverlay(previewResult);
   setFace('thinking');
   setAvatar('thinking');
 
   // 高速モード or 判断速度0: 迷いカーソル演出なし。即決する。
   if (fastMode || thinkDelay <= 0) {
-    addMsg('thinking', `フロンティア ${fs} セル評価完了。最小リスク ${pStr} のセルを選定。`);
     setAvatar('active');
     return;
   }
@@ -769,7 +767,6 @@ async function showGambleThinking(previewResult) {
     await new Promise(r => setTimeout(r, budget));
   }
 
-  addMsg('thinking', `フロンティア ${fs} セル評価完了。最小リスク ${pStr} のセルを選定。`);
   setAvatar('active');
 }
 
@@ -859,11 +856,7 @@ async function boomEffect(boomIdx) {
     }
   }
 
-  // boom ログ（モード別）
-  const boomMsg = loopMode === 'in'
-    ? 'あなたの判断で地雷を踏みました。'
-    : 'AIが地雷を踏みました。';
-  addMsg('boom', boomMsg);
+  // boom のログは agent 側の判断行（✗ ...→ 地雷）で出すのでここでは出さない
 
   // 全地雷を一瞬見せる
   updateDisplay();
@@ -913,14 +906,11 @@ async function executeAnimatedStep() {
       setAvatar('sleeping');
 
       // フロンティアを強調 ＋ 確率ヒートマップを表示（人間の判断材料として）
+      // 「あなたの番です」等のプロンプトはログに出さない（判断行のみ追う）。
+      // 手番はカーソル停止・ヒートマップ・アバター睡眠で示す。
       if (event.frontier) showFrontierHighlight(event.frontier);
       showGambleOverlay();
 
-      if (event.firstMove) {
-        addMsg('human', '初手です。情報はありません。好きなマスを選んでください。');
-      } else {
-        addMsg('human', 'あなたの番です。ヒートマップを参考に選んでください。');
-      }
       updateDisplay();
       animating = false;
       return;
@@ -1169,7 +1159,6 @@ async function handleClear(eventOverride) {
         aiJudgments: agent.getAiJudgments() - taskBaseline.aiJudgments,
         elapsedMs: Date.now() - taskBaseline.startTime,
       });
-      addMsg('system', `監督、${diffLabel(difficulty)} をクリアしました。`);
       taskIndex++;
 
       if (taskIndex >= workOrder.tasks.length) {
@@ -1184,7 +1173,6 @@ async function handleClear(eventOverride) {
       return;
     }
 
-    addMsg('system', `クリア。続行。`);
     await new Promise(r => setTimeout(r, 400));
     initBoard();
     startLoop();
@@ -1219,15 +1207,22 @@ function showReview() {
     }
   }
 
+  // 証跡ログ（判断の記録・セッション全体）
+  const esc = (str) => str.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const logHtml = sessionLog.length === 0
+    ? '<div class="review-log-line">（ログなし）</div>'
+    : sessionLog.map(e =>
+        `<div class="review-log-line ${e.type}"><span class="review-log-time">${e.time}</span>${esc(e.text)}</div>`
+      ).join('');
+
   reviewBody.innerHTML =
     taskBreakdown +
     `<div class="review-section-title">集計</div>` +
-    `<div class="review-stat">クリア総数: ${s.totalClears} 回</div>` +
     `<div class="review-stat">失敗 (boom): ${s.totalFailures} 回</div>` +
     `<div class="review-stat">${gambleLabel}: ${s.totalGambles} 回</div>` +
-    `<div class="review-stat">確定手: ${s.totalDeductions} 回</div>` +
     `<div class="review-stat">監督時間: ${formatHMS(s.elapsedMs)}</div>` +
-    `<div class="review-stat">AIが開いたセル: ${s.totalCellsOpened}</div>`;
+    `<div class="review-section-title">証跡（判断ログ）</div>` +
+    `<div class="review-log">${logHtml}</div>`;
 
   reviewOverlay.style.display = 'flex';
 }
