@@ -1,0 +1,11 @@
+{
+  "name": "ai-minesweeper",
+  "version": "2.0.0",
+  "type": "module",
+  "private": true,
+  "description": "AI Minesweeper — human on the loop",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "serve": "python3 -m http.server 8080"
+  }
+}

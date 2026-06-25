@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Minesweeper — human on the loop</title>
+  <meta name="description" content="AIが論理も運も全て引き受ける。人間はただ眺めるだけ。監督者という名の傍観者のためのマインスイーパー。">
+  <meta property="og:title" content="AI Minesweeper — human on the loop">
+  <meta property="og:description" content="AIが論理も運も全て引き受ける。人間はただ眺めるだけ。">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ワークオーダー（タスク指示書） -->
+  <div class="work-order-overlay" id="workOrderOverlay" style="display:none">
+    <div class="work-order-dialog">
+      <div class="title-bar">
+        <span class="title-bar-text">タスク指示書</span>
+      </div>
+      <div class="work-order-body">
+        <div class="wo-about">
+          <p>AIが論理解決も確率的判断も自律で行い、失敗しても自ら再挑戦する。人間は監督者として眺めるだけ。</p>
+          <p>
+            本作は <a href="https://mame.github.io/minesweeper-spoiled-by-ai/" target="_blank" rel="noopener">Minesweeper spoiled by AI</a>（作者: mame）へのアンサー。
+            あちらが human-in-the-loop なら、こちらは human-on-the-loop ― 2026年、運の判断すらAIに委ねた先の風景。
+          </p>
+          <p>
+            ソルバーのアルゴリズムは <a href="https://www.ioccc.org/2020/endoh1/index.html" target="_blank" rel="noopener">IOCCC 2020 endoh1</a>（CC BY-SA 4.0）の記述を着想元とした独自実装。
+            / <a href="https://github.com/taketoc3/ai-minesweeper" target="_blank" rel="noopener">GitHub (MIT)</a>
+          </p>
+        </div>
+        <div class="wo-section">
+          <label class="wo-label">モード</label>
+          <select class="retro-select" id="woLoopMode">
+            <option value="on" selected>on-the-loop（AI全自動・眺めるだけ）</option>
+            <option value="in">in-the-loop（判断は人間）</option>
+          </select>
+        </div>
+        <div class="wo-section">
+          <label class="wo-label">タスク</label>
+          <div id="woTaskRows">
+            <!-- 難易度ラベルは JS で動的生成 -->
+          </div>
+        </div>
+        <button class="retro-btn wo-start-btn" id="woStartBtn">AIに任せる</button>
+        <button class="retro-btn wo-cancel-btn" id="woCancelBtn" style="display:none">戻る（変更しない）</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- === 最外殻: エージェントコンソール === -->
+  <div class="agent-console">
+
+    <!-- コンソールタイトルバー -->
+    <div class="title-bar console-title-bar">
+      <span class="title-bar-text">AI AGENT — human on the loop</span>
+      <span class="title-bar-status" id="consoleStatus">操作・監視中</span>
+    </div>
+
+    <!-- メインレイアウト: ゲームアプリ | 思考ログ -->
+    <div class="main-layout">
+
+      <!-- === 左: ゲームアプリ領域（Minesweeper ウィンドウ） === -->
+      <div class="game-app-area">
+        <!-- 判断エージェント・アバターストリップ -->
+        <div class="agent-avatar-strip" id="agentAvatarStrip">
+          <span class="avatar-agent-label">AI AGENT</span>
+          <span class="avatar-stat"><span class="avatar-stat-key">再試行:</span> <span class="avatar-stat-val" id="avatarAttempts">0</span></span>
+          <span class="avatar-stat"><span class="avatar-stat-key">判断:</span> <span class="avatar-stat-val" id="avatarJudgments">0</span></span>
+          <span class="avatar-emoji" id="avatarEmoji">&#x1F610;</span>
+          <button class="loop-toggle" id="loopToggleBtn" title="モード切替">on-the-loop</button>
+          <span class="avatar-stat"><span class="avatar-stat-key">経過:</span> <span class="avatar-stat-val avatar-time" id="avatarTime">00:00:00</span></span>
+        </div>
+        <div class="game-window">
+          <!-- ゲームタイトルバー -->
+          <div class="title-bar game-title-bar">
+            <span class="title-bar-text">Minesweeper</span>
+          </div>
+          <!-- 面ヘッダ（クラシック配置: 地雷数 | 顔 | 経過秒） -->
+          <div class="face-header">
+            <div class="led-counter face-led" id="ledMines">040</div>
+            <button class="face-btn" id="faceBtn" title="リスタート">&#x1F642;</button>
+            <div class="led-counter face-led green" id="ledGameTime">000</div>
+          </div>
+          <!-- 盤面 -->
+          <div class="board-panel">
+            <div class="board-container">
+              <div class="board-wrapper" id="boardWrapper">
+                <div class="board-grid" id="boardGrid"></div>
+                <div class="fake-cursor" id="fakeCursor"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === 右: 思考ログ === -->
+      <div class="message-panel">
+        <div class="message-header">Thought Log</div>
+        <div class="message-body" id="msgBody">
+          <div class="message-entries" id="msgEntries"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- タスクリスト -->
+    <div class="task-list-panel" id="taskListPanel" style="display:none">
+      <span class="task-list-label">Tasks:</span>
+      <div class="task-list-items" id="taskListItems"></div>
+    </div>
+
+    <!-- コントロールバー（速度/判断速度スライダーのみ既定で非表示。js/ui.mjs の SHOW_SPEED_CONTROLS を true にすれば復活） -->
+    <div class="controls-bar" id="controlsBar">
+      <div class="control-group" id="speedControlGroup">
+        <label>速度</label>
+        <input type="range" class="retro-slider" id="moveSlider" min="0" max="800" value="100" step="10">
+        <span class="slider-val" id="moveSliderVal">100ms</span>
+      </div>
+      <div class="control-group" id="thinkControlGroup">
+        <label>判断速度</label>
+        <input type="range" class="retro-slider" id="thinkSlider" min="0" max="3000" value="1000" step="50">
+        <span class="slider-val" id="thinkSliderVal">1000ms</span>
+      </div>
+      <div class="control-group">
+        <button class="retro-btn" id="playPauseBtn">PAUSE</button>
+      </div>
+      <div class="control-group">
+        <button class="retro-btn" id="loopToggleBtnBar" title="押し込み = on-the-loop（AIが判断）／解除 = in-the-loop（あなたが判断）">AIに判断を任せる</button>
+      </div>
+      <div class="control-group">
+        <label class="retro-checkbox-label">
+          <input type="checkbox" id="fastModeCheck" class="retro-checkbox">
+          <span class="retro-checkmark"></span>
+          高速モード
+        </label>
+      </div>
+      <div class="control-group">
+        <label class="retro-checkbox-label">
+          <input type="checkbox" id="autoScrollCheck" class="retro-checkbox" checked>
+          <span class="retro-checkmark"></span>
+          オートスクロール
+        </label>
+      </div>
+      <div class="control-group">
+        <button class="retro-btn" id="woChangeBtn">タスクを変更</button>
+      </div>
+    </div>
+
+    <!-- ヒートマップ凡例 -->
+    <div class="heatmap-legend" id="heatmapLegend">
+      <span class="legend-title">地雷確率ヒートマップ</span>
+      <div class="legend-bar-container">
+        <span class="legend-side-label">安全寄り</span>
+        <div class="legend-bar-wrap">
+          <div class="legend-bar"></div>
+          <div class="legend-ticks">
+            <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+          </div>
+        </div>
+        <span class="legend-side-label">危険寄り</span>
+      </div>
+    </div>
+
+    <!-- フッター（クレジットのみ） -->
+    <div class="about-section">
+      <span class="about-credit"><a href="https://notdefine.com/" target="_blank" rel="noopener">notdefine-soft</a></span>
+    </div>
+
+  </div><!-- /.agent-console -->
+
+  <!-- クリアオーバーレイ（ワークオーダー外） -->
+  <div class="clear-overlay" id="clearOverlay" style="display:none">
+    <div class="clear-dialog">
+      <div class="title-bar">
+        <span class="title-bar-text">CLEARED</span>
+      </div>
+      <div class="clear-body">
+        <h2>CLEARED</h2>
+        <p id="clearSummaryText"></p>
+        <button class="retro-btn" id="replayBtn">もう一度眺める</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- タスクレビューオーバーレイ -->
+  <div class="review-overlay" id="reviewOverlay" style="display:none">
+    <div class="review-dialog">
+      <div class="title-bar">
+        <span class="title-bar-text">タスクレビュー</span>
+      </div>
+      <div class="review-body-wrap">
+        <h2>結果</h2>
+        <div id="reviewBody"></div>
+        <div class="review-buttons">
+          <button class="retro-btn" id="reviewNewBtn">新しいタスクを指示</button>
+          <button class="retro-btn" id="reviewRetryBtn">もう一度</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/ui.mjs"></script>
+</body>
+</html>
