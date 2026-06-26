@@ -1029,6 +1029,18 @@ html, body {
   color: var(--text-secondary);
 }
 
+/* 滑落のスタンプ: human-in → on → out of the loop（診断ラベル風に小さく） */
+.wo-tagline-drift {
+  margin: 9px 0 0;
+  padding-top: 7px;
+  border-top: 1px dotted var(--bevel-dark);
+  text-align: right;
+  font-family: var(--font-jp);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
 .wo-about {
   margin-bottom: 14px;
   padding: 8px 10px;
@@ -1275,8 +1287,8 @@ html, body {
 .about-section {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start; /* about と著作権を左寄せで隣に並べる */
+  gap: 10px;
   flex-wrap: wrap;
   padding: 5px 10px;
   font-size: 11px;
@@ -1285,6 +1297,10 @@ html, body {
   background: var(--bg-panel);
   font-family: var(--font-jp);
   flex-shrink: 0;
+}
+
+.about-sep {
+  color: var(--text-muted);
 }
 
 .about-section a {

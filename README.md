@@ -1,14 +1,17 @@
-# AI Minesweeper — human on the loop
+# Human spoiled by AI
+
+*human-in → on → out of the loop*
 
 AIが論理推論も確率的判断も自律で行い、失敗しても自ら新しい盤面を生成して再挑戦する。
-人間は監督者として眺めるだけ — 介入ボタンはあるが、普段は出番がない。
+人間は監督者として眺めるだけ — 判断を引き取る切り替え（in-the-loop）はあるが、普段は出番がない。
 
 ## コンセプト
 
-本作は [mame](https://github.com/mame) 氏の [Minesweeper spoiled by AI](https://mame.github.io/minesweeper-spoiled-by-ai/) へのアンサー作品です。
+本作は [mame](https://github.com/mame) 氏の [Minesweeper spoiled by AI](https://mame.github.io/minesweeper-spoiled-by-ai/) へのアンサー作品です。タイトルも一語だけ入れ替えた応答になっています（*Minesweeper* spoiled by AI → *Human* spoiled by AI）。
 
-- **mame版 (human-in-the-loop)**: AIがヒントを出し、人間がクリックする
-- **本作 (human-on-the-loop)**: AIが全てを実行し、人間は監督するだけ
+- **human-in-the-loop（mame版）**: AIがヒントを出し、人間がクリックする — 運も責任も人間が負う
+- **human-on-the-loop（本作の建前）**: AIが論理も運も実行し、人間は監督するだけ
+- **human-out-of-the-loop（本作の本音）**: 監督すら手放し、人間はただ待つ — 「完了まで、別のタスクを進めておいてください」
 
 2026年、運の判断すらAIに委ね、人間は監督すら手放しつつある — その風景を描く表現作品。
 
