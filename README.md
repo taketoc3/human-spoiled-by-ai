@@ -45,5 +45,5 @@ npm run serve
 
 ## リンク
 
-- [notdefine-soft](https://notdefine.com/)
+- [notdefine-soft](https://notdefine.com/links/)
 - [GitHub Pages](https://taketoc3.github.io/ai-minesweeper/) (公開予定)

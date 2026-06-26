@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>about — Human spoiled by AI</title>
+  <meta name="description" content="Human spoiled by AI について — mame『Minesweeper spoiled by AI』へのアンサー作品。コンセプト・クレジット・ライセンス。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="about-body">
+
+  <main class="about-window">
+    <div class="title-bar">
+      <span class="title-bar-text">about</span>
+      <a class="title-bar-status about-close" href="index.html">▶ play</a>
+    </div>
+
+    <div class="about-content">
+
+      <header class="about-hero">
+        <h1 class="about-h1">Human spoiled by AI</h1>
+        <p class="about-sub">human-in &rarr; on &rarr; out of the loop</p>
+      </header>
+
+      <section class="about-sec">
+        <h2>これは何か</h2>
+        <p>AI が論理推論も確率的判断（運試し）も自律で行い、失敗しても自ら新しい盤面を生成して再挑戦するマインスイーパーです。人間に残るのは「監督」という名の手持ち無沙汰だけ。判断を引き取る切り替え（in-the-loop）はありますが、普段は出番がありません。</p>
+        <p>2026年、運の判断すら AI に委ね、人間は監督すら手放しつつある——その風景を描く表現作品です。</p>
+      </section>
+
+      <section class="about-sec">
+        <h2>mame 版へのアンサー</h2>
+        <p>本作は <a href="https://mame.github.io/minesweeper-spoiled-by-ai/" target="_blank" rel="noopener">mame</a> 氏の『Minesweeper spoiled by AI』へのアンサー作品です。タイトルは一語だけ入れ替えた応答になっています（<i>Minesweeper</i> spoiled by AI → <i>Human</i> spoiled by AI）。</p>
+        <ul class="about-list">
+          <li><b>human-in-the-loop（mame版）</b> — AI がヒントを出し、人間がクリックする。運も責任も人間が負う。</li>
+          <li><b>human-on-the-loop（本作の建前）</b> — AI が論理も運も実行し、人間は監督するだけ。</li>
+          <li><b>human-out-of-the-loop（本作の本音）</b> — 監督すら手放し、人間はただ待つ。「完了まで、別のタスクを進めておいてください」</li>
+        </ul>
+        <p class="about-note">mame 版は全権利留保のため、コード・CSS・HTML は一切流用していません（クリーンルーム実装）。Windows マインスイーパー風レトロピクセルの見た目は look-and-feel の自力再現です。</p>
+      </section>
+
+      <section class="about-sec">
+        <h2>遊び方</h2>
+        <ul class="about-list">
+          <li><b>on-the-loop</b>（既定） — AI が運の判断まで自動で行う。あなたは眺めるだけ。</li>
+          <li><b>in-the-loop</b> — トグルで切り替えると、運試しの一手をあなたが選べる。</li>
+          <li><b>タスク指示書</b> — 難易度を上から順に指示。クリアで次へ進む。</li>
+          <li><b>高速モード</b> — 演出の余韻は残しつつ操作だけ高速化。</li>
+        </ul>
+      </section>
+
+      <section class="about-sec">
+        <h2>クレジット</h2>
+        <ul class="about-list">
+          <li><b>着想元</b> — mame『Minesweeper spoiled by AI』（オマージュ・アンサー／コード非流用）</li>
+          <li><b>アルゴリズム着想元</b> — <a href="https://www.ioccc.org/2020/endoh1/index.html" target="_blank" rel="noopener">IOCCC 2020 endoh1</a>（CC BY-SA 4.0）。本作ソルバーはその記述からの独自実装。</li>
+          <li><b>フォント</b> — <a href="https://fonts.google.com/specimen/DotGothic16" target="_blank" rel="noopener">DotGothic16</a> / <a href="https://fonts.google.com/specimen/Press+Start+2P" target="_blank" rel="noopener">Press Start 2P</a>（SIL Open Font License）</li>
+        </ul>
+      </section>
+
+      <section class="about-sec">
+        <h2>ライセンス</h2>
+        <p>本作の自作コードは <a href="LICENSE" target="_blank" rel="noopener">MIT License</a> の下で公開しています。</p>
+        <p class="about-copy">Copyright &copy; 2026 taketoc3 (notdefine-soft)</p>
+      </section>
+
+      <nav class="about-links">
+        <a href="index.html">▶ プレイする</a>
+        <a href="https://github.com/taketoc3/ai-minesweeper" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://notdefine.com/links/" target="_blank" rel="noopener">notdefine-soft</a>
+      </nav>
+
+    </div>
+
+    <div class="about-footer">&copy;2026 <a href="https://notdefine.com/links/" target="_blank" rel="noopener">notdefine-soft</a></div>
+  </main>
+
+</body>
+</html>
