@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "type": "module",
   "private": true,
-  "description": "AI Minesweeper — human on the loop",
+  "description": "Human spoiled by AI — human-in → on → out of the loop",
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "serve": "python3 -m http.server 8080"
