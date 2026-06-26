@@ -22,9 +22,16 @@
         <span class="title-bar-text">タスク指示書</span>
       </div>
       <div class="work-order-body">
+        <!-- コンセプト（mame『Minesweeper spoiled by AI』タグラインへのアンサー）。
+             将来の英語ロケール対応時はこの3行＋継続行を翻訳対象にする。 -->
+        <div class="wo-tagline">
+          <p class="wo-tagline-line">🤔「考えるのは、私がやります」🎓</p>
+          <p class="wo-tagline-line">🎲「運試しも、私がやります」🍀</p>
+          <p class="wo-tagline-line">🥱「あなたは、ただ待つ係です。⏳</p>
+          <p class="wo-tagline-line wo-tagline-cont">完了まで、別のタスクを進めておいてください」</p>
+        </div>
         <div class="wo-about">
-          <p>AIが論理と確率で自動的に解き、失敗しても再挑戦します。</p>
-          <p>下のタスクを上から順に挑戦し、クリアすると次へ進みます。</p>
+          <p>タスクは上から順にクリアすると次へ進みます。</p>
         </div>
         <div class="wo-section">
           <label class="wo-label">タスク</label>
@@ -34,7 +41,9 @@
         </div>
         <button class="retro-btn wo-start-btn" id="woStartBtn">AIに任せる</button>
         <button class="retro-btn wo-cancel-btn" id="woCancelBtn" style="display:none">戻る（変更しない）</button>
-        <p class="wo-credit"><a href="https://mame.github.io/minesweeper-spoiled-by-ai/" target="_blank" rel="noopener">『Minesweeper spoiled by AI』(mame)</a> に着想 ・ MIT</p>
+        <!-- TODO: GitHub 説明ページ作成後、href を実 URL に差し替える。
+             着想元（mame『Minesweeper spoiled by AI』）・MIT の明記は about ページ側で行う。 -->
+        <p class="wo-credit"><a href="#" target="_blank" rel="noopener">about</a></p>
       </div>
     </div>
   </div>
@@ -154,9 +163,11 @@
       </div>
     </div>
 
-    <!-- フッター（クレジットのみ） -->
+    <!-- フッター（about リンク ＋ 著作権クレジット） -->
     <div class="about-section">
-      <span class="about-credit"><a href="https://notdefine.com/" target="_blank" rel="noopener">notdefine-soft</a></span>
+      <!-- TODO: GitHub 説明ページ作成後、href を実 URL に差し替える -->
+      <a class="about-link" href="#" target="_blank" rel="noopener">about</a>
+      <span class="about-credit">&copy;2026 <a href="https://notdefine.com/" target="_blank" rel="noopener">notdefine-soft</a></span>
     </div>
 
   </div><!-- /.agent-console -->

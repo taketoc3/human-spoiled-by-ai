@@ -1005,6 +1005,30 @@ html, body {
   min-width: 16px;
 }
 
+/* タスク指示書 冒頭のコンセプト（mame タグラインへのアンサー）。沈んだ風のレトロパネル */
+.wo-tagline {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: #e8e8e8;
+  border: 2px solid;
+  border-color: var(--bevel-dark) var(--bevel-light) var(--bevel-light) var(--bevel-dark);
+  font-family: var(--font-jp);
+}
+
+.wo-tagline-line {
+  margin: 3px 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+
+/* AI の台詞の継続行（「完了まで、別のタスクを…」）。字下げ＋ややトーンを落とす */
+.wo-tagline-cont {
+  padding-left: 1.7em;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
 .wo-about {
   margin-bottom: 14px;
   padding: 8px 10px;
