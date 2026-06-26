@@ -3,6 +3,9 @@
 // solver を import し、1ステップずつ盤面を進める
 
 import { neighbors, genBoard, deduce, computeProbabilities, pickGuess } from './solver.mjs';
+import { t } from './i18n.mjs';
+// 思考ログは t() で生成。t() は呼び出し時に現在ロケールを解決するため、
+// ロケール未設定（テスト等）では既定の ja 文字列になり、挙動・型は不変。
 
 /**
  * フラッド展開（value=0 のセルから連鎖的に隣接を開放）
@@ -270,7 +273,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
       resetInternal();
       return {
         type: 'restart',
-        log: `↻ 再挑戦 #${stats.attempts - 1}`,
+        log: t('log.restart', { n: stats.attempts - 1 }),
       };
     }
 
@@ -278,10 +281,12 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
     if (phase === PHASE.CLEAR) {
       phase = PHASE.IDLE;
       const sec = Math.round(stats.elapsedMs / 1000);
-      const timeStr = sec >= 60 ? `${Math.floor(sec / 60)}分${sec % 60}秒` : `${sec}秒`;
+      const timeStr = sec >= 60
+        ? t('time.ms', { m: Math.floor(sec / 60), s: sec % 60 })
+        : t('time.s', { s: sec });
       return {
         type: 'clear',
-        log: `✓ CLEAR ・判断${stats.gambles}回 ・${timeStr}`,
+        log: t('log.clear', { gambles: stats.gambles, time: timeStr }),
         stats: { ...stats },
       };
     }
@@ -295,7 +300,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
           type: 'await-human',
           firstMove: true,
           frontier,
-          log: '初手。情報ゼロ。あなたが最初の一手を選ぶ。',
+          log: t('log.firstZero'),
         };
       }
       // 初手は角 (index 0)
@@ -313,7 +318,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         index: guess.index,
         indices: result.opened,
         revealGroups: [{ click: guess.index, opened: result.opened }],
-        log: `初手 ${coordStr(guess.index)} 地雷残${minesRemaining()}`,
+        log: t('log.first', { coord: coordStr(guess.index), mines: minesRemaining() }),
       };
     }
 
@@ -379,12 +384,12 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
 
         const logParts = [];
         if (flaggedCells.length > 0) {
-          logParts.push(`地雷確定 ${flaggedCells.length} セルをフラグ`);
+          logParts.push(t('log.deduceFlag', { n: flaggedCells.length }));
         }
         if (revealedCells.length > 0) {
-          logParts.push(`安全確定 ${revealedCells.length} セルを開放`);
+          logParts.push(t('log.deduceSafe', { n: revealedCells.length }));
         }
-        logParts.push(`開放率 ${progress().toFixed(1)}%`);
+        logParts.push(t('log.deduceProgress', { pct: progress().toFixed(1) }));
 
         return {
           type: 'deduce',
@@ -392,7 +397,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
           flagged: flaggedCells,
           revealGroups,
           actions,
-          log: `論理推論: ${logParts.join('。')}。`,
+          log: t('log.deduce', { body: logParts.join(t('log.deduceSep')) }),
         };
       }
 
@@ -408,7 +413,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         return {
           type: 'await-human',
           frontier,
-          log: `確定手なし。フロンティア ${frontier.length} セル。あなたの番です。`,
+          log: t('log.stuck', { n: frontier.length }),
         };
       }
 
@@ -427,7 +432,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         return {
           type: 'boom',
           index: guess.index,
-          log: `✗ 判断 ${coordStr(guess.index)} 地雷残${minesRemaining()} 確率${(guess.probability * 100).toFixed(0)}%・${guess.candidates}択 → 地雷`,
+          log: t('log.gambleBoom', { coord: coordStr(guess.index), mines: minesRemaining(), prob: (guess.probability * 100).toFixed(0), candidates: guess.candidates }),
           stats: { ...stats },
         };
       }
@@ -452,7 +457,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         frontierSize: guess.frontierSize,
         revealed: result.opened,
         revealGroups: [{ click: guess.index, opened: result.opened }],
-        log: `◯ 判断 ${coordStr(guess.index)} 地雷残${minesRemaining()} 確率${(guess.probability * 100).toFixed(0)}%・${guess.candidates}択 → 安全`,
+        log: t('log.gambleSafe', { coord: coordStr(guess.index), mines: minesRemaining(), prob: (guess.probability * 100).toFixed(0), candidates: guess.candidates }),
       };
     }
 
@@ -478,14 +483,14 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         index,
         revealed: result.opened,
         revealGroups: [{ click: index, opened: result.opened }],
-        log: `初手 あなた ${coordStr(index)} 地雷残${minesRemaining()}`,
+        log: t('log.humanFirst', { coord: coordStr(index), mines: minesRemaining() }),
       };
     }
 
     if (revealed[index] || flagged[index]) {
       return {
         type: 'idle',
-        log: 'そのセルは既に開放済みまたはフラグ済み。',
+        log: t('log.alreadyOpen'),
       };
     }
 
@@ -499,7 +504,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
         type: 'boom',
         index,
         revealed: result.opened,
-        log: `✗ あなた ${coordStr(index)} 地雷残${minesRemaining()} → 地雷`,
+        log: t('log.humanBoom', { coord: coordStr(index), mines: minesRemaining() }),
         stats: { ...stats },
       };
     }
@@ -522,7 +527,7 @@ export function createAgent({ rows, cols, mineCount, rng = Math.random }) {
       frontierSize: null,
       revealed: result.opened,
       revealGroups: [{ click: index, opened: result.opened }],
-      log: `◯ あなた ${coordStr(index)} 地雷残${minesRemaining()} → 安全`,
+      log: t('log.humanSafe', { coord: coordStr(index), mines: minesRemaining() }),
       humanIntervention: true,
     };
   }

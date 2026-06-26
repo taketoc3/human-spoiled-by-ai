@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Human spoiled by AI</title>
-  <meta name="description" content="AIが論理も運も全て引き受ける。人間はただ眺めるだけ。監督者という名の傍観者のためのマインスイーパー。">
+  <meta name="description" content="AIが論理も運も全て引き受ける。人間はただ眺めるだけ。監督者という名の傍観者のためのマインスイーパー。" data-i18n-attr="content:meta.description">
   <meta property="og:title" content="Human spoiled by AI">
-  <meta property="og:description" content="AIが論理も運も全て引き受ける。人間はただ眺めるだけ。">
+  <meta property="og:description" content="AIが論理も運も全て引き受ける。人間はただ眺めるだけ。" data-i18n-attr="content:meta.ogDescription">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,31 +19,34 @@
   <div class="work-order-overlay" id="workOrderOverlay" style="display:none">
     <div class="work-order-dialog">
       <div class="title-bar">
-        <span class="title-bar-text">タスク指示書</span>
+        <span class="title-bar-text" data-i18n="wo.title">タスク指示書</span>
       </div>
       <div class="work-order-body">
         <!-- コンセプト（mame『Minesweeper spoiled by AI』タグラインへのアンサー）。
              将来の英語ロケール対応時はこの3行＋継続行を翻訳対象にする。 -->
         <div class="wo-tagline">
-          <p class="wo-tagline-line">🤔「考えるのは、私がやります」🎓</p>
-          <p class="wo-tagline-line">🎲「運試しも、私がやります」🍀</p>
-          <p class="wo-tagline-line">🥱「あなたは、ただ待つ係です。⏳</p>
-          <p class="wo-tagline-line wo-tagline-cont">完了まで、別のタスクを進めておいてください」</p>
+          <p class="wo-tagline-line" data-i18n="wo.tagline1">🤔「考えるのは、私がやります」🎓</p>
+          <p class="wo-tagline-line" data-i18n="wo.tagline2">🎲「運試しも、私がやります」🍀</p>
+          <p class="wo-tagline-line" data-i18n="wo.tagline3">🥱「あなたは、ただ待つ係です。⏳</p>
+          <p class="wo-tagline-line wo-tagline-cont" data-i18n="wo.tagline4">完了まで、別のタスクを進めておいてください」</p>
           <p class="wo-tagline-drift">human-in &rarr; on &rarr; out of the loop</p>
         </div>
         <div class="wo-about">
-          <p>タスクは上から順にクリアすると次へ進みます。</p>
+          <p data-i18n="wo.about">タスクは上から順にクリアすると次へ進みます。</p>
         </div>
         <div class="wo-section">
-          <label class="wo-label">タスク</label>
+          <label class="wo-label" data-i18n="wo.label">タスク</label>
           <div id="woTaskRows">
             <!-- 難易度ラベルは JS で動的生成 -->
           </div>
         </div>
-        <button class="retro-btn wo-start-btn" id="woStartBtn">AIに任せる</button>
-        <button class="retro-btn wo-cancel-btn" id="woCancelBtn" style="display:none">戻る（変更しない）</button>
+        <button class="retro-btn wo-start-btn" id="woStartBtn" data-i18n="wo.start">AIに任せる</button>
+        <button class="retro-btn wo-cancel-btn" id="woCancelBtn" style="display:none" data-i18n="wo.cancel">戻る（変更しない）</button>
         <!-- 着想元（mame『Minesweeper spoiled by AI』）・MIT の明記は about.html に記載 -->
-        <p class="wo-credit"><a href="about.html" target="_blank" rel="noopener">about</a></p>
+        <p class="wo-credit">
+          <a href="about.html" target="_blank" rel="noopener">about</a>
+          <button class="lang-toggle-btn" data-lang-toggle data-i18n="lang.toggle" title="JA / EN">EN</button>
+        </p>
       </div>
     </div>
   </div>
@@ -54,7 +57,7 @@
     <!-- コンソールタイトルバー -->
     <div class="title-bar console-title-bar">
       <span class="title-bar-text">AI AGENT</span>
-      <span class="title-bar-status" id="consoleStatus">操作・監視中</span>
+      <span class="title-bar-status" id="consoleStatus" data-i18n="console.status">操作・監視中</span>
     </div>
 
     <!-- メインレイアウト: ゲームアプリ | 思考ログ -->
@@ -65,11 +68,11 @@
         <!-- 判断エージェント・アバターストリップ -->
         <div class="agent-avatar-strip" id="agentAvatarStrip">
           <span class="avatar-agent-label">AI AGENT</span>
-          <span class="avatar-stat"><span class="avatar-stat-key">再試行:</span> <span class="avatar-stat-val" id="avatarAttempts">0</span></span>
-          <span class="avatar-stat"><span class="avatar-stat-key">判断:</span> <span class="avatar-stat-val" id="avatarJudgments">0</span></span>
+          <span class="avatar-stat"><span class="avatar-stat-key" data-i18n="avatar.retries">再試行:</span> <span class="avatar-stat-val" id="avatarAttempts">0</span></span>
+          <span class="avatar-stat"><span class="avatar-stat-key" data-i18n="avatar.judgments">判断:</span> <span class="avatar-stat-val" id="avatarJudgments">0</span></span>
           <span class="avatar-emoji" id="avatarEmoji">&#x1F610;</span>
-          <button class="loop-toggle" id="loopToggleBtn" title="モード切替">on-the-loop</button>
-          <span class="avatar-stat"><span class="avatar-stat-key">経過:</span> <span class="avatar-stat-val avatar-time" id="avatarTime">00:00:00</span></span>
+          <button class="loop-toggle" id="loopToggleBtn" title="モード切替" data-i18n-attr="title:avatar.modeHint">on-the-loop</button>
+          <span class="avatar-stat"><span class="avatar-stat-key" data-i18n="avatar.elapsed">経過:</span> <span class="avatar-stat-val avatar-time" id="avatarTime">00:00:00</span></span>
         </div>
         <div class="game-window">
           <!-- ゲームタイトルバー -->
@@ -79,7 +82,7 @@
           <!-- 面ヘッダ（クラシック配置: 地雷数 | 顔 | 経過秒） -->
           <div class="face-header">
             <div class="led-counter face-led" id="ledMines">040</div>
-            <button class="face-btn" id="faceBtn" title="リスタート">&#x1F642;</button>
+            <button class="face-btn" id="faceBtn" title="リスタート" data-i18n-attr="title:face.restart">&#x1F642;</button>
             <div class="led-counter face-led green" id="ledGameTime">000</div>
           </div>
           <!-- 盤面 -->
@@ -114,12 +117,12 @@
     <!-- コントロールバー（速度/判断速度スライダーのみ既定で非表示。js/ui.mjs の SHOW_SPEED_CONTROLS を true にすれば復活） -->
     <div class="controls-bar" id="controlsBar">
       <div class="control-group" id="speedControlGroup">
-        <label>速度</label>
+        <label data-i18n="ctrl.speed">速度</label>
         <input type="range" class="retro-slider" id="moveSlider" min="0" max="800" value="100" step="10">
         <span class="slider-val" id="moveSliderVal">100ms</span>
       </div>
       <div class="control-group" id="thinkControlGroup">
-        <label>判断速度</label>
+        <label data-i18n="ctrl.thinkSpeed">判断速度</label>
         <input type="range" class="retro-slider" id="thinkSlider" min="0" max="3000" value="1000" step="50">
         <span class="slider-val" id="thinkSliderVal">1000ms</span>
       </div>
@@ -127,39 +130,39 @@
         <button class="retro-btn" id="playPauseBtn">PAUSE</button>
       </div>
       <div class="control-group">
-        <button class="retro-btn" id="loopToggleBtnBar" title="押し込み = on-the-loop（AIが判断）／解除 = in-the-loop（あなたが判断）">AIに判断を任せる</button>
+        <button class="retro-btn" id="loopToggleBtnBar" title="押し込み = on-the-loop（AIが判断）／解除 = in-the-loop（あなたが判断）" data-i18n="ctrl.letAIDecide" data-i18n-attr="title:ctrl.letAIDecideHint">AIに判断を任せる</button>
       </div>
       <div class="control-group">
         <label class="retro-checkbox-label">
           <input type="checkbox" id="fastModeCheck" class="retro-checkbox">
           <span class="retro-checkmark"></span>
-          高速モード
+          <span data-i18n="ctrl.fastMode">高速モード</span>
         </label>
       </div>
       <div class="control-group">
         <label class="retro-checkbox-label">
           <input type="checkbox" id="autoScrollCheck" class="retro-checkbox" checked>
           <span class="retro-checkmark"></span>
-          オートスクロール
+          <span data-i18n="ctrl.autoScroll">オートスクロール</span>
         </label>
       </div>
       <div class="control-group">
-        <button class="retro-btn" id="woChangeBtn">タスクを変更</button>
+        <button class="retro-btn" id="woChangeBtn" data-i18n="ctrl.changeTasks">タスクを変更</button>
       </div>
     </div>
 
     <!-- ヒートマップ凡例 -->
     <div class="heatmap-legend" id="heatmapLegend">
-      <span class="legend-title">地雷確率ヒートマップ</span>
+      <span class="legend-title" data-i18n="legend.title">地雷確率ヒートマップ</span>
       <div class="legend-bar-container">
-        <span class="legend-side-label">安全寄り</span>
+        <span class="legend-side-label" data-i18n="legend.safer">安全寄り</span>
         <div class="legend-bar-wrap">
           <div class="legend-bar"></div>
           <div class="legend-ticks">
             <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
           </div>
         </div>
-        <span class="legend-side-label">危険寄り</span>
+        <span class="legend-side-label" data-i18n="legend.riskier">危険寄り</span>
       </div>
     </div>
 
@@ -168,6 +171,8 @@
       <a class="about-link" href="about.html" target="_blank" rel="noopener">about</a>
       <span class="about-sep">·</span>
       <span class="about-credit">&copy;2026 <a href="https://notdefine.com/links/" target="_blank" rel="noopener">notdefine-soft</a></span>
+      <span class="about-sep">·</span>
+      <button class="lang-toggle-btn" id="langToggleBtn" data-lang-toggle data-i18n="lang.toggle" title="JA / EN">EN</button>
     </div>
 
   </div><!-- /.agent-console -->
@@ -181,7 +186,7 @@
       <div class="clear-body">
         <h2>CLEARED</h2>
         <p id="clearSummaryText"></p>
-        <button class="retro-btn" id="replayBtn">もう一度眺める</button>
+        <button class="retro-btn" id="replayBtn" data-i18n="cleared.replay">もう一度眺める</button>
       </div>
     </div>
   </div>
@@ -190,14 +195,14 @@
   <div class="review-overlay" id="reviewOverlay" style="display:none">
     <div class="review-dialog">
       <div class="title-bar">
-        <span class="title-bar-text">タスクレビュー</span>
+        <span class="title-bar-text" data-i18n="reviewui.title">タスクレビュー</span>
       </div>
       <div class="review-body-wrap">
-        <h2>結果</h2>
+        <h2 data-i18n="reviewui.heading">結果</h2>
         <div id="reviewBody"></div>
         <div class="review-buttons">
-          <button class="retro-btn" id="reviewNewBtn">新しいタスクを指示</button>
-          <button class="retro-btn" id="reviewRetryBtn">もう一度</button>
+          <button class="retro-btn" id="reviewNewBtn" data-i18n="reviewui.newTasks">新しいタスクを指示</button>
+          <button class="retro-btn" id="reviewRetryBtn" data-i18n="reviewui.retry">もう一度</button>
         </div>
       </div>
     </div>

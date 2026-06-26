@@ -1312,6 +1312,26 @@ html, body {
   text-decoration: underline;
 }
 
+/* JA/EN ロケールトグル（フッター・about ヘッダ共通） */
+.lang-toggle-btn {
+  font-family: var(--font-retro);
+  font-size: 8px;
+  color: var(--accent-cyan);
+  background: var(--bg-panel);
+  border: 1px solid var(--bevel-dark);
+  border-top-color: var(--bevel-light);
+  border-left-color: var(--bevel-light);
+  padding: 3px 6px;
+  cursor: pointer;
+  line-height: 1;
+}
+.lang-toggle-btn:hover { text-decoration: underline; }
+.lang-toggle-btn:active {
+  border-color: var(--bevel-light);
+  border-top-color: var(--bevel-dark);
+  border-left-color: var(--bevel-dark);
+}
+
 /* ============================
    about ページ（about.html）
    ============================ */

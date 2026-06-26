@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>about — Human spoiled by AI</title>
-  <meta name="description" content="Human spoiled by AI について — mame『Minesweeper spoiled by AI』へのアンサー作品。コンセプト・クレジット・ライセンス。">
+  <meta name="description" content="Human spoiled by AI について — mame『Minesweeper spoiled by AI』へのアンサー作品。コンセプト・クレジット・ライセンス。" data-i18n-attr="content:about.metaDescription">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
   <main class="about-window">
     <div class="title-bar">
       <span class="title-bar-text">about</span>
-      <a class="title-bar-status about-close" href="index.html">▶ play</a>
+      <a class="title-bar-status about-close" href="index.html" data-i18n="about.play">▶ play</a>
     </div>
 
     <div class="about-content">
@@ -26,57 +26,61 @@
       </header>
 
       <section class="about-sec">
-        <h2>これは何か</h2>
-        <p>AI が論理推論も確率的判断（運試し）も自律で行い、失敗しても自ら新しい盤面を生成して再挑戦するマインスイーパーです。人間に残るのは「監督」という名の手持ち無沙汰だけ。判断を引き取る切り替え（in-the-loop）はありますが、普段は出番がありません。</p>
-        <p>2026年、運の判断すら AI に委ね、人間は監督すら手放しつつある——その風景を描く表現作品です。</p>
+        <h2 data-i18n="about.h2.what">これは何か</h2>
+        <p data-i18n="about.what.p1">AI が論理推論も確率的判断（運試し）も自律で行い、失敗しても自ら新しい盤面を生成して再挑戦するマインスイーパーです。人間に残るのは「監督」という名の手持ち無沙汰だけ。判断を引き取る切り替え（in-the-loop）はありますが、普段は出番がありません。</p>
+        <p data-i18n="about.what.p2">2026年、運の判断すら AI に委ね、人間は監督すら手放しつつある——その風景を描く表現作品です。</p>
       </section>
 
       <section class="about-sec">
-        <h2>mame 版へのアンサー</h2>
-        <p>本作は <a href="https://mame.github.io/minesweeper-spoiled-by-ai/" target="_blank" rel="noopener">mame</a> 氏の『Minesweeper spoiled by AI』へのアンサー作品です。タイトルは一語だけ入れ替えた応答になっています（<i>Minesweeper</i> spoiled by AI → <i>Human</i> spoiled by AI）。</p>
+        <h2 data-i18n="about.h2.answer">mame 版へのアンサー</h2>
+        <p data-i18n-html="about.answer.p">本作は <a href="https://mame.github.io/minesweeper-spoiled-by-ai/" target="_blank" rel="noopener">mame</a> 氏の『Minesweeper spoiled by AI』へのアンサー作品です。タイトルは一語だけ入れ替えた応答になっています（<i>Minesweeper</i> spoiled by AI → <i>Human</i> spoiled by AI）。</p>
         <ul class="about-list">
-          <li><b>human-in-the-loop（mame版）</b> — AI がヒントを出し、人間がクリックする。運も責任も人間が負う。</li>
-          <li><b>human-on-the-loop（本作の建前）</b> — AI が論理も運も実行し、人間は監督するだけ。</li>
-          <li><b>human-out-of-the-loop（本作の本音）</b> — 監督すら手放し、人間はただ待つ。「完了まで、別のタスクを進めておいてください」</li>
+          <li data-i18n-html="about.answer.li1"><b>human-in-the-loop（mame版）</b> — AI がヒントを出し、人間がクリックする。運も責任も人間が負う。</li>
+          <li data-i18n-html="about.answer.li2"><b>human-on-the-loop（本作の建前）</b> — AI が論理も運も実行し、人間は監督するだけ。</li>
+          <li data-i18n-html="about.answer.li3"><b>human-out-of-the-loop（本作の本音）</b> — 監督すら手放し、人間はただ待つ。「完了まで、別のタスクを進めておいてください」</li>
         </ul>
-        <p class="about-note">mame 版は全権利留保のため、コード・CSS・HTML は一切流用していません（クリーンルーム実装）。Windows マインスイーパー風レトロピクセルの見た目は look-and-feel の自力再現です。</p>
+        <p class="about-note" data-i18n="about.answer.note">mame 版は全権利留保のため、コード・CSS・HTML は一切流用していません（クリーンルーム実装）。Windows マインスイーパー風レトロピクセルの見た目は look-and-feel の自力再現です。</p>
       </section>
 
       <section class="about-sec">
-        <h2>遊び方</h2>
+        <h2 data-i18n="about.h2.play">遊び方</h2>
         <ul class="about-list">
-          <li><b>on-the-loop</b>（既定） — AI が運の判断まで自動で行う。あなたは眺めるだけ。</li>
-          <li><b>in-the-loop</b> — トグルで切り替えると、運試しの一手をあなたが選べる。</li>
-          <li><b>タスク指示書</b> — 難易度を上から順に指示。クリアで次へ進む。</li>
-          <li><b>高速モード</b> — 演出の余韻は残しつつ操作だけ高速化。</li>
-        </ul>
-      </section>
-
-      <section class="about-sec">
-        <h2>クレジット</h2>
-        <ul class="about-list">
-          <li><b>着想元</b> — mame『Minesweeper spoiled by AI』（オマージュ・アンサー／コード非流用）</li>
-          <li><b>アルゴリズム着想元</b> — <a href="https://www.ioccc.org/2020/endoh1/index.html" target="_blank" rel="noopener">IOCCC 2020 endoh1</a>（CC BY-SA 4.0）。本作ソルバーはその記述からの独自実装。</li>
-          <li><b>フォント</b> — <a href="https://fonts.google.com/specimen/DotGothic16" target="_blank" rel="noopener">DotGothic16</a> / <a href="https://fonts.google.com/specimen/Press+Start+2P" target="_blank" rel="noopener">Press Start 2P</a>（SIL Open Font License）</li>
+          <li data-i18n-html="about.play.li1"><b>on-the-loop</b>（既定） — AI が運の判断まで自動で行う。あなたは眺めるだけ。</li>
+          <li data-i18n-html="about.play.li2"><b>in-the-loop</b> — トグルで切り替えると、運試しの一手をあなたが選べる。</li>
+          <li data-i18n-html="about.play.li3"><b>タスク指示書</b> — 難易度を上から順に指示。クリアで次へ進む。</li>
+          <li data-i18n-html="about.play.li4"><b>高速モード</b> — 演出の余韻は残しつつ操作だけ高速化。</li>
         </ul>
       </section>
 
       <section class="about-sec">
-        <h2>ライセンス</h2>
-        <p>本作の自作コードは <a href="LICENSE" target="_blank" rel="noopener">MIT License</a> の下で公開しています。</p>
+        <h2 data-i18n="about.h2.credit">クレジット</h2>
+        <ul class="about-list">
+          <li data-i18n-html="about.credit.li1"><b>着想元</b> — mame『Minesweeper spoiled by AI』（オマージュ・アンサー／コード非流用）</li>
+          <li data-i18n-html="about.credit.li2"><b>アルゴリズム着想元</b> — <a href="https://www.ioccc.org/2020/endoh1/index.html" target="_blank" rel="noopener">IOCCC 2020 endoh1</a>（CC BY-SA 4.0）。本作ソルバーはその記述からの独自実装。</li>
+          <li data-i18n-html="about.credit.li3"><b>フォント</b> — <a href="https://fonts.google.com/specimen/DotGothic16" target="_blank" rel="noopener">DotGothic16</a> / <a href="https://fonts.google.com/specimen/Press+Start+2P" target="_blank" rel="noopener">Press Start 2P</a>（SIL Open Font License）</li>
+        </ul>
+      </section>
+
+      <section class="about-sec">
+        <h2 data-i18n="about.h2.license">ライセンス</h2>
+        <p data-i18n-html="about.license.p">本作の自作コードは <a href="LICENSE" target="_blank" rel="noopener">MIT License</a> の下で公開しています。</p>
         <p class="about-copy">Copyright &copy; 2026 taketoc3 (notdefine-soft)</p>
       </section>
 
       <nav class="about-links">
-        <a href="index.html">▶ プレイする</a>
+        <a href="index.html" data-i18n="about.nav.play">▶ プレイする</a>
         <a href="https://github.com/taketoc3/ai-minesweeper" target="_blank" rel="noopener">GitHub</a>
         <a href="https://notdefine.com/links/" target="_blank" rel="noopener">notdefine-soft</a>
       </nav>
 
     </div>
 
-    <div class="about-footer">&copy;2026 <a href="https://notdefine.com/links/" target="_blank" rel="noopener">notdefine-soft</a></div>
+    <div class="about-footer">
+      &copy;2026 <a href="https://notdefine.com/links/" target="_blank" rel="noopener">notdefine-soft</a>
+      <button class="lang-toggle-btn" id="langToggleBtn" data-lang-toggle data-i18n="lang.toggle" title="JA / EN">EN</button>
+    </div>
   </main>
 
+  <script type="module" src="js/about.mjs"></script>
 </body>
 </html>

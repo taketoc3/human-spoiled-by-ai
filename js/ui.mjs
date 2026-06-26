@@ -4,6 +4,8 @@
 // 2領域: ゲームアプリ（Minesweeperウィンドウ） / エージェントコンソール（外から制御する側）
 
 import { createAgent } from './agent.mjs';
+import { t, getLocale } from './i18n.mjs';
+import { setupI18n, wireLangToggles } from './i18n-dom.mjs';
 
 // --- 難易度プリセット ---
 const DIFFICULTIES = {
@@ -19,7 +21,7 @@ function diffLabel(key) {
   const d = DIFFICULTIES[key];
   const name = key.charAt(0).toUpperCase() + key.slice(1);
   const cells = d.rows * d.cols;
-  return `${name} ${d.rows}×${d.cols}（${cells}マス／地雷${d.mineCount}）`;
+  return t('diff.label', { name, rows: d.rows, cols: d.cols, cells, mines: d.mineCount });
 }
 
 // --- セルサイズ定数 ---
@@ -171,7 +173,7 @@ function buildWoTaskRows() {
 
     const emptyOpt = document.createElement('option');
     emptyOpt.value = '';
-    emptyOpt.textContent = '---（なし）';
+    emptyOpt.textContent = t('diff.none');
     sel.appendChild(emptyOpt);
 
     for (const key of diffKeys) {
@@ -248,11 +250,11 @@ function switchLoopMode(newMode) {
     clearFrontierHighlight();
     clearGambleOverlay();
     setFace('normal');
-    addMsg('system', 'モード → on-the-loop（判断はAI）');
+    addMsg('system', t('mode.on'));
     startLoop();
   } else if (loopMode === 'in') {
     // on→in 切替: 次の gamble で自然に await-human になる
-    addMsg('system', 'モード → in-the-loop（判断はあなた）');
+    addMsg('system', t('mode.in'));
   }
 }
 
@@ -327,7 +329,7 @@ function updateTaskList() {
       // 完了タスク: 確定統計
       const r = taskResults[idx];
       item.classList.add('task-done');
-      item.textContent = `✓ ${name}  再試行${r.attempts} ／ 判断${r.aiJudgments} ／ ${formatMSS(r.elapsedMs)}`;
+      item.textContent = t('task.itemDone', { name, attempts: r.attempts, judgments: r.aiJudgments, time: formatMSS(r.elapsedMs) });
     } else if (idx === taskIndex && agent) {
       // 進行中: リアルタイム差分
       const nowStats = agent.getStats();
@@ -335,7 +337,7 @@ function updateTaskList() {
       const aj = agent.getAiJudgments() - taskBaseline.aiJudgments;
       const elapsed = Date.now() - taskBaseline.startTime;
       item.classList.add('task-active');
-      item.textContent = `▶ ${name}  再試行${att} ／ 判断${aj} ／ ${formatMSS(elapsed)}`;
+      item.textContent = t('task.itemActive', { name, attempts: att, judgments: aj, time: formatMSS(elapsed) });
     } else {
       // 待機
       item.classList.add('task-pending');
@@ -425,8 +427,8 @@ function startCurrentTask() {
   };
   const d = DIFFICULTIES[difficulty];
   const dname = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
-  addMsg('system', `▶ タスク ${taskIndex + 1}/${workOrder.tasks.length}  ${dname} ${d.rows}×${d.cols}・地雷${d.mineCount}`);
-  if (loopMode === 'in') addMsg('system', 'モード → in-the-loop（判断はあなた）');
+  addMsg('system', t('task.start', { idx: taskIndex + 1, total: workOrder.tasks.length, name: dname, rows: d.rows, cols: d.cols, mines: d.mineCount }));
+  if (loopMode === 'in') addMsg('system', t('mode.in'));
   startLoop();
 }
 
@@ -1238,10 +1240,13 @@ async function handleClear(eventOverride) {
   } else {
     if (event.stats) {
       const stats = event.stats;
-      clearSummaryText.innerHTML =
-        `再試行 ${Math.max(0, stats.attempts - 1)} 回 / 失敗 ${stats.failures} 回<br>` +
-        `判断 ${stats.gambles} 回 / 確定手 ${stats.deductions} 回<br>` +
-        `経過 ${formatHMS(stats.elapsedMs)}`;
+      clearSummaryText.innerHTML = t('clear.summary', {
+        attempts: Math.max(0, stats.attempts - 1),
+        failures: stats.failures,
+        gambles: stats.gambles,
+        deductions: stats.deductions,
+        time: formatHMS(stats.elapsedMs),
+      });
       clearOverlay.style.display = 'flex';
     }
   }
@@ -1253,34 +1258,34 @@ function showReview() {
   runnerStats.elapsedMs = Date.now() - runnerStats.startTime;
 
   const s = runnerStats;
-  const gambleLabel = loopMode === 'on' ? 'AIの判断' : 'あなたの判断';
+  const gambleLabel = loopMode === 'on' ? t('review.gambleAI') : t('review.gambleHuman');
 
   // 各タスク内訳
   let taskBreakdown = '';
   if (taskResults.length > 0) {
-    taskBreakdown = '<div class="review-section-title">タスク内訳</div>';
+    taskBreakdown = `<div class="review-section-title">${t('review.taskTitle')}</div>`;
     for (const r of taskResults) {
       const d = DIFFICULTIES[r.difficulty];
       const size = d ? `${d.rows}×${d.cols}` : r.difficulty;
-      taskBreakdown += `<div class="review-task">${size}: 再試行${r.attempts} ／ 自動判断${r.aiJudgments} ／ ${formatMSS(r.elapsedMs)}</div>`;
+      taskBreakdown += `<div class="review-task">${t('review.task', { size, attempts: r.attempts, judgments: r.aiJudgments, time: formatMSS(r.elapsedMs) })}</div>`;
     }
   }
 
   // 証跡ログ（判断の記録・セッション全体）
   const esc = (str) => str.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const logHtml = sessionLog.length === 0
-    ? '<div class="review-log-line">（ログなし）</div>'
+    ? `<div class="review-log-line">${t('review.noLog')}</div>`
     : sessionLog.map(e =>
         `<div class="review-log-line ${e.type}"><span class="review-log-time">${e.time}</span>${esc(e.text)}</div>`
       ).join('');
 
   reviewBody.innerHTML =
     taskBreakdown +
-    `<div class="review-section-title">集計</div>` +
-    `<div class="review-stat">失敗 (boom): ${s.totalFailures} 回</div>` +
-    `<div class="review-stat">${gambleLabel}: ${s.totalGambles} 回</div>` +
-    `<div class="review-stat">監督時間: ${formatHMS(s.elapsedMs)}</div>` +
-    `<div class="review-section-title">証跡（判断ログ）</div>` +
+    `<div class="review-section-title">${t('review.summaryTitle')}</div>` +
+    `<div class="review-stat">${t('review.failures', { n: s.totalFailures })}</div>` +
+    `<div class="review-stat">${t('review.gambleCount', { label: gambleLabel, n: s.totalGambles })}</div>` +
+    `<div class="review-stat">${t('review.supervisorTime', { time: formatHMS(s.elapsedMs) })}</div>` +
+    `<div class="review-section-title">${t('review.logTitle')}</div>` +
     `<div class="review-log">${logHtml}</div>`;
 
   reviewOverlay.style.display = 'flex';
@@ -1510,6 +1515,15 @@ reviewRetryBtn.addEventListener('click', () => {
 });
 
 // --- 起動 ---
+// i18n: detectLocale → 静的DOM反映 → 以降のロケール変更で動的UIも再描画
+setupI18n({
+  onChange: () => {
+    buildWoTaskRows();           // タスク指示書の難易度ラベルを再翻訳
+    if (workOrder) updateTaskList(); // タスクリストの統計表記を再翻訳
+  },
+});
+wireLangToggles();
+
 buildWoTaskRows();
 updateLoopToggleUI(); // トグルボタンの初期モード色を適用
 workOrderOverlay.style.display = 'flex';
