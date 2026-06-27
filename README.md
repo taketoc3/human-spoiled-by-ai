@@ -46,4 +46,4 @@ npm run serve
 ## リンク
 
 - [notdefine-soft](https://notdefine.com/links/)
-- [GitHub Pages](https://taketoc3.github.io/human-spoiled-by-ai/) (公開予定)
+- [プレイする（GitHub Pages）](https://taketoc3.github.io/human-spoiled-by-ai/)
